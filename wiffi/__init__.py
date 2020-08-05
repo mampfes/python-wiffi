@@ -152,7 +152,7 @@ class WiffiConnection:
                     b"\x04"
                 )  # read until separator \x04 received
                 await self.parse_msg(data[:-1])  # omit separator with [:-1]
-            except asyncio.streams.IncompleteReadError:
+            except asyncio.IncompleteReadError:
                 pass
 
     async def parse_msg(self, raw_data):
