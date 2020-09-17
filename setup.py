@@ -9,6 +9,7 @@ setuptools.setup(
     author="mampfes",
     author_email="mampfes@users.noreply.github.com",
     description="Python 3 package to interface devices from STALL WIFFI.",
+    license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/mampfes/python-wiffi",
