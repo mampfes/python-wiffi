@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="wiffi",
-    version="1.0.1",
+    version="1.1.0",
     author="mampfes",
     author_email="mampfes@users.noreply.github.com",
     description="Python 3 package to interface devices from STALL WIFFI.",
