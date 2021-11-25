@@ -82,10 +82,73 @@ def convert_value(var):
     return None
 
 
+class WiffiMetricFromSystemInfo:
+    """Representation of wiffi metric reported in json telegram."""
+
+    def __init__(self, name, uom, metric_type, value):
+        """Initialize the instance."""
+        self._name = name
+        self._metric_type = metric_type
+        self._unit_of_measurement = uom
+        if metric_type == "number":
+            self._value = float(value)
+        elif metric_type == "bool":
+            self._value = value == "true"
+        else:
+            self._value = value
+
+    @property
+    def id(self):
+        """Return integer based metric id."""
+        return hash(self._name)
+
+    @property
+    def name(self):
+        """Return metric name."""
+        return self._name
+
+    @property
+    def is_number(self):
+        """Return true if the metric value type is a float number."""
+        return self._metric_type == "number"
+
+    @property
+    def is_bool(self):
+        """Return true if the metric value type is boolean."""
+        return self._metric_type == "boolean"
+
+    @property
+    def is_string(self):
+        """Return true if the metric value type is a string."""
+        return self._metric_type == "string"
+
+    @property
+    def description(self):
+        """Return metric description."""
+        return self._name
+
+    @property
+    def unit_of_measurement(self):
+        """Return metric unit of measurement.
+
+        Returns an empty string for boolean and string metrics.
+        """
+        return self._unit_of_measurement
+
+    @property
+    def value(self):
+        """Return the metric value.
+
+        The returned value is either a float, bool or string depending on the
+        metric type.
+        """
+        return self._value
+
+
 class WiffiDevice:
     """Representation of wiffi device properties reported in the json telegram."""
 
-    def __init__(self, moduletype, data):
+    def __init__(self, moduletype, data, configuration_url):
         """Initialize the instance."""
         self._moduletype = moduletype
         self._mac_address = data["MAC-Adresse"]
@@ -93,6 +156,7 @@ class WiffiDevice:
         self._wlan_ssid = data["WLAN_ssid"]
         self._wlan_signal_strength = float(data["WLAN_Signal_dBm"])
         self._sw_version = data["firmware"]
+        self._configuration_url = configuration_url
 
     @property
     def moduletype(self):
@@ -124,6 +188,11 @@ class WiffiDevice:
         """Return the firmware revision string of the wiffi device."""
         return self._sw_version
 
+    @property
+    def configuration_url(self):
+        """Return the URL to the web interface of the wiffi device."""
+        return self._configuration_url
+
 
 class WiffiConnection:
     """Representation of a TCP connection between a wiffi device and the server.
@@ -146,28 +215,34 @@ class WiffiConnection:
 
     async def __call__(self, reader, writer):
         """Process callback from the TCP server if a new connection has been opened."""
+        peername = writer.get_extra_info("peername")
         while not reader.at_eof():
             try:
                 data = await reader.readuntil(
                     b"\x04"
                 )  # read until separator \x04 received
-                await self.parse_msg(data[:-1])  # omit separator with [:-1]
+                await self.parse_msg(peername, data[:-1])  # omit separator with [:-1]
             except asyncio.IncompleteReadError:
                 pass
 
-    async def parse_msg(self, raw_data):
+    async def parse_msg(self, peername, raw_data):
         """Parse received telegram which is terminated by 0x04."""
         data = json.loads(raw_data.decode("utf-8"))
 
         moduletype = data["modultyp"]
         systeminfo = data["Systeminfo"]
+        configuration_url = f"http://{peername[0]}"
 
         metrics = []
         for var in data["vars"]:
             metrics.append(WiffiMetric(var))
 
+        metrics.append(WiffiMetricFromSystemInfo("rssi", "dBm", "number", data["Systeminfo"]["WLAN_Signal_dBm"]))
+        metrics.append(WiffiMetricFromSystemInfo("uptime", "s", "number", data["Systeminfo"]["sec_seit_reset"]))
+        metrics.append(WiffiMetricFromSystemInfo("ssid", None, "string", data["Systeminfo"]["WLAN_ssid"]))
+
         if self._server.callback is not None:
-            await self._server.callback(WiffiDevice(moduletype, systeminfo), metrics)
+            await self._server.callback(WiffiDevice(moduletype, systeminfo, configuration_url), metrics)
 
 
 class WiffiTcpServer:
