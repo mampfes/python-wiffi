@@ -1,6 +1,12 @@
 Release History
 ===============
 
+1.1.2 (5-Feb-2023)
+------------------
+
+**Bugfix**
+
+Remove further dependencies to WLAN based attributes to enable support for LAN based devices.
 
 1.1.1 (4-Feb-2023)
 ------------------

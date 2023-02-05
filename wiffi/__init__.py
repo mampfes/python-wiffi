@@ -151,11 +151,11 @@ class WiffiDevice:
     def __init__(self, moduletype, data, configuration_url):
         """Initialize the instance."""
         self._moduletype = moduletype
-        self._mac_address = data["MAC-Adresse"]
-        self._dest_ip = data["Homematic_CCU_ip"]
-        self._wlan_ssid = data["WLAN_ssid"]
-        self._wlan_signal_strength = float(data["WLAN_Signal_dBm"])
-        self._sw_version = data["firmware"]
+        self._mac_address = data.get("MAC-Adresse")
+        self._dest_ip = data.get("Homematic_CCU_ip")
+        self._wlan_ssid = data.get("WLAN_ssid")
+        self._wlan_signal_strength = float(data.get("WLAN_Signal_dBm", 0))
+        self._sw_version = data.get("firmware")
         self._configuration_url = configuration_url
 
     @property
