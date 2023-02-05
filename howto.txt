@@ -1,0 +1,7 @@
+1. version in setup.py anpassen
+2. Commit mit version Tag versehen
+
+3. Auf pypi hochladen:
+
+python3 setup.py sdist bdist_wheel
+twine upload dist/*

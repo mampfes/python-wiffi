@@ -237,9 +237,20 @@ class WiffiConnection:
         for var in data["vars"]:
             metrics.append(WiffiMetric(var))
 
-        metrics.append(WiffiMetricFromSystemInfo("rssi", "dBm", "number", data["Systeminfo"]["WLAN_Signal_dBm"]))
-        metrics.append(WiffiMetricFromSystemInfo("uptime", "s", "number", data["Systeminfo"]["sec_seit_reset"]))
-        metrics.append(WiffiMetricFromSystemInfo("ssid", None, "string", data["Systeminfo"]["WLAN_ssid"]))
+        try:
+            metrics.append(WiffiMetricFromSystemInfo("rssi", "dBm", "number", data["Systeminfo"]["WLAN_Signal_dBm"]))
+        except KeyError:
+            pass
+
+        try:
+            metrics.append(WiffiMetricFromSystemInfo("uptime", "s", "number", data["Systeminfo"]["sec_seit_reset"]))
+        except KeyError:
+            pass
+
+        try:
+            metrics.append(WiffiMetricFromSystemInfo("ssid", None, "string", data["Systeminfo"]["WLAN_ssid"]))
+        except KeyError:
+            pass
 
         if self._server.callback is not None:
             await self._server.callback(WiffiDevice(moduletype, systeminfo, configuration_url), metrics)
